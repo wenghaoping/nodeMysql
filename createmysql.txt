@@ -1,0 +1,6 @@
+CREATE TABLE chat (
+     number INT(11),
+     NAME VARCHAR(255),
+     chat VARCHAR(255),
+     TIME VARCHAR(255)
+ );
