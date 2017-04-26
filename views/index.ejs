@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>留言本</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+        .row h4{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">留言本</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="/">删除留言<span class="sr-only">(current)</span></a></li>
+
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<form class="form-horizontal col-lg-6" id="form">
+    <div class="form-group">
+        <label for="xingming" class="col-sm-2 control-label">姓名</label>
+
+        <div class="col-sm-10">
+            <input type="text" class="form-control" id="name" name="name" placeholder="姓名">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="liuyan" class="col-sm-2 control-label">留言</label>
+
+        <div class="col-sm-10">
+            <textarea class="form-control" rows="3" name="liuyan" id="liuyan"></textarea>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+            <button id="submit" type="button" class="btn btn-success">提交</button>
+        </div>
+    </div>
+    <div class="alert alert-success" role="alert" id="chenggong" style="display: none;">
+        <a href="#" class="alert-link">表单已经成功提交</a>
+    </div>
+    <div class="alert alert-danger" role="alert" id="shibai" style="display: none;">
+        <a href="#" class="alert-link">表单提交失败</a>
+    </div>
+</form>
+
+<table class="table table-hover table-bordered" id="chat">
+    <!--<tr><td>昵称</td><td>对话</td><td>时间</td></tr>-->
+    <thead>
+        <tr><td>昵称</td><td>对话</td><td>时间</td><td>操作</td></tr>
+    </thead>
+    <tbody id="chatbody">
+
+    </tbody>
+</table>
+
+<script src="js/jquery-3.1.0.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script>
+   function notNull (id){
+       $("#"+id).find("input[type='text']").each(function () {
+           if ($(this).val() == "" || $(this).val() == null || $(this).val() == undefined) {
+               return false;
+           }else{
+               return true;
+           }
+       })
+    }
+    //Ajax提交表单
+    $("#submit").click(function () {
+        if($("#name").val()==" " || $("#name").val()==null ||$("#liuyan").val()==" " || $("#liuyan").val() ==null || $("#name").val()=="" || $("#liuyan").val()=="" || $("#name").val()==undefined || $("#liuyan").val()==undefined){
+/*        if(!notNull ("form")){*/
+            alert("你好歹写点东西啊,妈的");
+            return;
+        }
+        $("#shibai").hide();
+        $("#chenggong").hide();
+        $.post("/tijiao", {
+            "name": $("#name").val(),
+            "liuyan": $("#liuyan").val()
+        }, function (result) {
+            if (result.result == -1) {
+                $("#shibai").fadeIn();
+            } else if (result.result == 1) {
+                //提交成功
+                $("#chenggong").fadeIn();
+                //数据库真的存储了，但是当前页面无法显示。这是因为需要刷新
+                $("#chatbody").prepend(
+                        "<tr><td>"+$("#name").val()+"</td><td>"+$("#liuyan").val()+"</td><td>"+new Date()+"</td><td><button type='button' class='btn btn-success'>删除</button></td></tr>"
+                );
+                $("#name").val(" ");
+                $("#liuyan").val(" ");
+            }
+        });
+    });
+    getData();
+    click();
+    //Ajax请求数据
+    function getData() {
+        $.get("/du", function (result) {
+            console.log(result.result);
+            var html="";
+            for(var i=0;i<result.result.length; i++){
+                html+="<tr><td>"+result.result[i].name+"</td><td>"+result.result[i].chat+"</td><td>"+result.result[i].TIME+"</td><td><button type='button' class='btn delbtn btn-success'>删除</button></td></tr>"
+            }
+            $("#chat").append(html);
+            click();
+        });
+    }
+    function click(){
+        $(".delbtn").click(function(){
+            var bln = window.confirm("确认要删除数据？");
+            if (bln == false)
+                return;
+            var inner = $(this).parent().prev().html();
+            $.get("/del"+inner, function (result) {
+                console.log(result);
+            })
+            $(this).parent().parent().remove();
+        })
+    }
+</script>
+</body>
+</html>
